@@ -47,6 +47,10 @@ logger = CodeWatchman(
 logger.info("Application started")
 logger.error("An error occurred", exc_info=True)
 logger.notify("Critical issue detected", priority="high")
+
+# success and failure methods to end the current log entry
+logger.success("Operation completed successfully")
+logger.failure("Operation failed")
 ```
 
 ### Without a Code Watchman Account
