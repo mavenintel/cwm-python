@@ -1,4 +1,7 @@
 import logging
+from typing import Optional
+from .console_handler import ConsoleHandler
+from .config import CodeWatchmanConfig, default_config
 
 class CodeWatchman(logging.Logger):
     CRITICAL = 50
@@ -10,43 +13,33 @@ class CodeWatchman(logging.Logger):
     DEBUG = 10
     NOTSET = 0
 
-    def __init__(self, name: str, level: int = logging.DEBUG):
-        super().__init__(name, level)
-        self.setLevel(level)
+    def __init__(self, config: Optional[CodeWatchmanConfig] = default_config):
+        super().__init__(config.name, config.level)
 
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(level)
-        formatter = logging.Formatter('%(asctime)s | %(levelname)s: %(message)s')
+        self.setLevel(config.level)
+        self.config = config
+
+        console_handler = ConsoleHandler(config)
+        console_handler.setLevel(config.level)
+        formatter = logging.Formatter(config.local_log_format, config.local_log_date_format)
         console_handler.setFormatter(formatter)
         self.addHandler(console_handler)
 
-    def color_message(self, message, level):
-        colors = {
-            logging.DEBUG: '\033[97m',    # Blue
-            logging.INFO: '\033[90m',     # gray
-            logging.WARNING: '\033[93m',  # Yellow
-            logging.ERROR: '\033[91m',    # Red
-            logging.CRITICAL: '\033[95m', # Magenta
-            'SUCCESS': '\033[92m',        # Green
-        }
-
-        reset = '\033[0m' # Reset color
-
-        self.debug
-
-        return f"{colors.get(level, reset)}{message}{reset}"
-
     def sep(self):
-        self.info("-" * 120)
+        self.info("-" * self.config.sep_length, extra={ "ignore@ws": True })
 
-    def success(self, message):
-        success_message = self.color_message(f"\u2713 {message}", 'SUCCESS')
-        self.info(success_message)
+    def success(self, message, extra=None):
+        if self.config.enable_colors:
+            message = f"\u2713 {message}"
 
-    def failure(self, message):
-        self.error(f"\u2717 {message}")
+        self.info(message, extra=extra)
+
+    def failure(self, message, extra=None):
+        self.error(f"\u2717 {message}", extra=extra)
 
     def _log(self, level, msg, args, exc_info=None, extra=None, stack_info=False, **kwargs):
         if self.isEnabledFor(level):
-            colored_msg = self.color_message(msg, level)
-            super()._log(level, colored_msg, args, exc_info, extra, stack_info)
+            super()._log(level, msg, args, exc_info, extra, stack_info)
+
+    def close(self):
+        return True
