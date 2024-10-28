@@ -1,0 +1,4 @@
+requests==2.*
+websockets==13.*
+websocket-client==1.*
+tqdm==4.*

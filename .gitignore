@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+
+# Pytest
+.pytest_cache/
+
+# VSCode
+.vscode/
+
+# Cursor
+.cursorignore
+
+# TQDM
+.tqdm_pids/
+
+# egg-info
+dist/
+build/
+*.egg-info/

@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "codewatchman"
+version = "0.1.0"
+description = "A logging library with cloud support and tqdm progress tracking"
+authors = [
+    { name="Code Watchman Team", email="support@codewatchman.com" },
+]
+readme = "README.md"
+requires-python = ">=3.7"
+dependencies = [
+    "requests==2.*",
+    "websockets==13.*",
+    "websocket-client==1.*",
+    "tqdm==4.*"
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Source" = "https://github.com/mavenintel/cwm-python"
+"Bug Reports" = "https://github.com/mavenintel/cwm-python/issues"
+"Documentation" = "https://docs.codewatchman.com/"
+
+[tool.setuptools]
+packages = ["codewatchman"]
