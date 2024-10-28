@@ -70,6 +70,11 @@ class CodeWatchman(logging.Logger):
         """
         self.log(FAILURE_LEVEL, msg, *args, **kwargs)
 
+    def sep(self):
+        """Add a separator line to the logs"""
+        separator = "-" * 50
+        self.info(separator)
+
     def __enter__(self) -> CodeWatchman:
         """Context manager entry."""
         return self
