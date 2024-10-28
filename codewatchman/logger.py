@@ -3,6 +3,7 @@ import threading
 from typing import Optional, Dict, Any
 from queue import Queue
 from .config import CodeWatchmanConfig
+from .formatters import DefaultFormatter, ServerFormatter
 
 class CodeWatchman(logging.Logger):
     # Custom log levels
@@ -21,18 +22,41 @@ class CodeWatchman(logging.Logger):
         self._transport_thread = None
         self._should_stop = threading.Event()
 
+        # Initialize formatters
+        self._console_formatter = DefaultFormatter()
+        self._server_formatter = ServerFormatter()
+
         # Setup console handler if enabled
         if config.console_output:
-            console_handler = logging.StreamHandler()
-            console_handler.setLevel(config.log_level)
-            formatter = logging.Formatter(
-                '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-            )
-            console_handler.setFormatter(formatter)
-            self.addHandler(console_handler)
+            self._setup_console_handler()
 
         # Initialize transport thread
         self._init_transport()
+
+    def _setup_console_handler(self):
+        """Setup console handler with our custom formatter"""
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(self.config.log_level)
+
+        # Create a custom Formatter that uses our DefaultFormatter
+        class CustomFormatter(logging.Formatter):
+            def __init__(self, cwm_formatter):
+                super().__init__()
+                self.cwm_formatter = cwm_formatter
+
+            def format(self, record):
+                # Use our custom formatter to format the message
+                return self.cwm_formatter.format(
+                    level=record.levelno,
+                    msg=record.getMessage(),
+                    extra=getattr(record, 'extra', None),
+                    thread=record.thread
+                )
+
+        console_handler.setFormatter(CustomFormatter(self._console_formatter))
+        self.addHandler(console_handler)
+
+
 
     def _init_transport(self):
         """Initialize the transport thread for sending logs to server"""
@@ -44,8 +68,21 @@ class CodeWatchman(logging.Logger):
 
     def _process_queue(self):
         """Process messages from queue and send to server"""
-        # TODO: Implement WebSocket connection and message sending
-        pass
+        while not self._should_stop.is_set():
+            try:
+                # Get message from queue with timeout to allow checking _should_stop
+                message = self._message_queue.get(timeout=0.1)
+
+                # TODO: Send message to server via WebSocket
+                # This is where we'll implement the actual server communication
+
+                self._message_queue.task_done()
+
+            except Queue.Empty:
+                continue
+            except Exception as e:
+                # Log error but don't raise to keep thread running
+                super().error(f"Error processing log message: {str(e)}")
 
     def _log_with_extra(self, level: int, msg: str, extra: Optional[Dict[str, Any]] = None, **kwargs):
         """Internal method to handle logging with extra parameters"""
@@ -55,14 +92,17 @@ class CodeWatchman(logging.Logger):
         # Log to console through parent Logger
         super().log(level, msg, extra=extra, **kwargs)
 
-        # Prepare message for server
-        log_entry = {
-            "level": logging.getLevelName(level),
-            "message": msg,
-            "extra": extra,
-            "project_id": self.config.project_id
-            # Additional context will be added here
-        }
+        # Format message for server using ServerFormatter
+        log_entry = self._server_formatter.format(
+            level=level,
+            msg=msg,
+            extra=extra,
+            thread=threading.get_ident(),
+            **kwargs
+        )
+
+        # Add project identification
+        log_entry['project_id'] = self.config.project_id
 
         # Add to queue for processing
         try:
