@@ -1,84 +1,73 @@
 from __future__ import annotations
 import logging
+import sys
 from typing import Any, Optional, Dict
-from dataclasses import dataclass
-from ..handlers.console import ConsoleHandler
-from .constants import (
-    LogLevel,
-    SUCCESS_LEVEL,
-    FAILURE_LEVEL,
-    DEFAULT_CONFIG
-)
+from colorama import init
 
-@dataclass
-class CodeWatchmanConfig:
-    project_id: str
-    project_secret: str
-    server_url: str = DEFAULT_CONFIG['server_url']
-    queue_size: int = DEFAULT_CONFIG['queue_size']
-    retry_attempts: int = DEFAULT_CONFIG['retry_attempts']
-    retry_delay: float = DEFAULT_CONFIG['retry_delay']
-    timeout: float = DEFAULT_CONFIG['timeout']
-    log_format: str = DEFAULT_CONFIG['log_format']
-    date_format: str = DEFAULT_CONFIG['date_format']
-    use_colors: bool = DEFAULT_CONFIG['use_colors']
+from .config import CodeWatchmanConfig
+from .constants import LogLevel, Colors
+
+# Initialize colorama for cross-platform color support
+init()
 
 class CodeWatchman(logging.Logger):
-    """Main logger class for CodeWatchman."""
-
     def __init__(
         self,
         config: CodeWatchmanConfig,
-        name: str = "codewatchman",
-        level: int = logging.INFO
+        level: int = logging.INFO,
+        name: str = "codewatchman"
     ) -> None:
-        """Initialize CodeWatchman logger.
-
-        Args:
-            config: Configuration object
-            name: Logger name
-            level: Initial logging level
-        """
+        """Initialize the CodeWatchman logger."""
         super().__init__(name, level)
         self.config = config
 
-        # Set up console handler
-        console_handler = ConsoleHandler(
-            use_colors=config.use_colors,
-            fmt=config.log_format,
-            date_fmt=config.date_format
-        )
+        # Create console handler with colored formatting
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setFormatter(ColoredFormatter())
         self.addHandler(console_handler)
 
     def success(self, msg: str, *args: Any, **kwargs: Any) -> None:
-        """Log a success message.
-
-        Args:
-            msg: Message to log
-            *args: Variable positional arguments
-            **kwargs: Variable keyword arguments
-        """
-        self.log(SUCCESS_LEVEL, msg, *args, **kwargs)
+        """Log a success message."""
+        if self.isEnabledFor(LogLevel.SUCCESS):
+            self._log(LogLevel.SUCCESS, msg, args, **kwargs)
 
     def failure(self, msg: str, *args: Any, **kwargs: Any) -> None:
-        """Log a failure message.
+        """Log a failure message."""
+        if self.isEnabledFor(LogLevel.FAILURE):
+            self._log(LogLevel.FAILURE, msg, args, **kwargs)
 
-        Args:
-            msg: Message to log
-            *args: Variable positional arguments
-            **kwargs: Variable keyword arguments
-        """
-        self.log(FAILURE_LEVEL, msg, *args, **kwargs)
+    def sep(self, char: str = "-", length: int = 50) -> None:
+        """Print a separator line."""
+        self.info(char * length)
 
-    def sep(self):
-        """Add a separator line to the logs"""
-        separator = "-" * 50
-        self.info(separator)
+    def close(self) -> None:
+        """Close the logger and clean up resources."""
+        for handler in self.handlers[:]:
+            handler.close()
+            self.removeHandler(handler)
 
-    def __enter__(self) -> CodeWatchman:
-        """Context manager entry."""
-        return self
 
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        """Context manager exit with cleanup."""
-        self.handlers.clear()
+class ColoredFormatter(logging.Formatter):
+    """Custom formatter adding colors to log output."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            fmt="%(asctime)s - %(levelname)s - %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S"
+        )
+        self.level_colors = {
+            logging.DEBUG: Colors.DEBUG,
+            logging.INFO: Colors.INFO,
+            logging.WARNING: Colors.WARNING,
+            logging.ERROR: Colors.ERROR,
+            logging.CRITICAL: Colors.CRITICAL,
+            LogLevel.SUCCESS: Colors.SUCCESS,
+            LogLevel.FAILURE: Colors.FAILURE,
+        }
+
+    def format(self, record: logging.LogRecord) -> str:
+        """Format the log record with colors."""
+        color = self.level_colors.get(record.levelno, Colors.RESET)
+        record.levelname = f"{color}{record.levelname}{Colors.RESET}"
+        record.msg = f"{color}{record.msg}{Colors.RESET}"
+        return super().format(record)

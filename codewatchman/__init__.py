@@ -1,5 +1,9 @@
-from .core.logger import CodeWatchman, CodeWatchmanConfig
+from __future__ import annotations
+from .core.logger import CodeWatchman
+from .core.config import CodeWatchmanConfig
 from .core.constants import LogLevel
-
-__version__ = "0.1.0"
-__all__ = ["CodeWatchman", "CodeWatchmanConfig", "LogLevel"]
+__all__ = [
+    "CodeWatchman",
+    "CodeWatchmanConfig",
+    "LogLevel"
+]

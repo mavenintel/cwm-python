@@ -1,4 +1,37 @@
-# CodeWatchman Library Design Plan
+I want to build a Python library called CodeWatchman, which is a custom logging module. The module should be a wrapper around Python's default logging library—the library logs to the console as well as to a server. The server calls should happen without blocking the script execution. This is how the library usage will be.
+
+```python
+import CodeWatchman, CodeWatchmanConfig
+
+cwm_config = CodeWatchmanConfig(
+    project_id="project123",
+    project_secret="secret456"
+)
+logger = CodeWatchman(config=cwm_config, level=logging.DEBUG)
+
+logger.debug("This is a debug message")
+logger.sep()
+logger.info("This is an info message")
+logger.sep()
+logger.warning("This is a warning message",  extra={ "payload": { "key": "value" } }
+)
+logger.error("This is an error message")
+logger.critical("This is a critical message")
+logger.success(
+	"This is a success message",
+	extra={ "payload": { "key": "value" } }
+)
+logger.sep()
+logger.failure("This is a fail message")
+logger.success("All messages sent.")
+logger.close()
+ ```
+
+1. Upon Creating the class, if there are credentials provided in the config object, connect to the client-server and send over machine and environment data. This step should be blocking as it is a necessary step.
+2. Each log after that should be sent to the console and web socket handlers.
+3. Add logs to a queue to process and send data asynchronously without stopping the program. The queue is consumed continuously waiting for data.
+4. When the program is complete, finish processing everything in the queue, close the connection and then exit the program. The `logger.close()` method will ensure that the program will not exit without processing all logs and closing the web socket connection.
+Now, create a high-level plan for this library such as file and class structure as well as which libraries to use.
 
 ## Project Structure
 ```
@@ -54,7 +87,7 @@ tests/
 class CodeWatchmanConfig:
     project_id: str
     project_secret: str
-    server_url: str = "wss://api.codewatchman.com/v1/logs"
+    server_url: str = "ws://localhost:8787/log"
     queue_size: int = 1000
     retry_attempts: int = 3
     retry_delay: float = 1.0
@@ -117,6 +150,16 @@ class CodeWatchmanConfig:
 - Stack traces
 - Custom metadata
 - Timestamps in ISO 8601 format
+- Color-coded logs using `colorama`
+- Standard log levels:
+  - DEBUG
+  - INFO
+  - WARNING
+  - ERROR
+  - CRITICAL
+- Custom levels:
+  - SUCCESS
+  - FAILURE
 
 ### 3. Error Handling
 - Connection failures
@@ -130,70 +173,42 @@ class CodeWatchmanConfig:
 - Connection pooling
 - Message compression
 
+### 5. Extra Features
+- System information collection
+- Custom log formatting
+- Message batching
+- Error handling and retry logic
+- Connection state monitoring
+- Queue statistics
+- tqdm support for monitoring progress
+
 ## Implementation Strategy
 
-### Phase 1: Core Functionality
-1. Basic logger implementation
-2. Console handler
-3. Configuration system
+### 1. Initialization Flow
+1. Create CodeWatchman instance
+2. Initialize configuration
+3. Set up logging handlers
+4. Start queue manager
+5. Establish WebSocket connection
+6. Send initial system information
 
-### Phase 2: Queue System
-1. Message queue implementation
-2. Worker thread
-3. Basic retry logic
+### 2. Logging Flow
+1. Log message created
+2. Format message with extras
+3. Send to console handler
+4. Add to message queue
+5. Background worker processes queue
+6. Send via WebSocket
+7. Handle success/failure
+8. Implement tqdm progress logging support
 
-### Phase 3: WebSocket Integration
-1. WebSocket handler
-2. Authentication
-3. Connection management
-
-### Phase 4: Enhanced Features
-1. System information collection
-2. Error handling
-3. Performance optimizations
-
-## Usage Examples
-
-### Basic Usage
-```python
-from codewatchman import CodeWatchman, CodeWatchmanConfig
-
-config = CodeWatchmanConfig(
-    project_id="project123",
-    project_secret="secret456"
-)
-
-logger = CodeWatchman(config=config)
-with logger:
-    logger.info("Application started")
-    try:
-        # Your code here
-        logger.success("Operation completed")
-    except Exception as e:
-        logger.error("Operation failed", exc_info=True)
-```
-
-### Advanced Usage
-```python
-logger = CodeWatchman(
-    config=config,
-    level=logging.DEBUG,
-    queue_size=2000,
-    retry_attempts=5
-)
-
-logger.warning(
-    "Resource usage high",
-    extra={
-        "payload": {
-            "cpu_usage": 85.5,
-            "memory_usage": 75.2,
-            "disk_space": 90.1
-        },
-        "tags": ["performance", "resource-warning"]
-    }
-)
-```
+### 3. Shutdown Flow
+1. Stop accepting new messages
+2. Process remaining queue items
+3. Send final statistics
+4. Close WebSocket connection
+5. Stop worker threads
+6. Clean up resources
 
 ## Testing Strategy
 

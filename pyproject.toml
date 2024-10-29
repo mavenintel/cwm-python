@@ -10,7 +10,7 @@ authors = [
     { name="Code Watchman Team", email="support@codewatchman.com" },
 ]
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 dependencies = [
     "requests==2.*",
     "websockets==13.*",
