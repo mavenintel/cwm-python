@@ -28,7 +28,11 @@ def test_custom_log_levels(logger):
 def test_separator(logger, capsys):
     logger.sep()
     captured = capsys.readouterr()
-    assert "-" * 50 in captured.out
+    sep_line = "-" * 50
+    if sep_line in captured.out:
+        print("This should have worked.")
+
+    assert sep_line in captured.out
 
 def test_config_validation():
     with pytest.raises(ValueError):

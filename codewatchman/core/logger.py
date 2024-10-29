@@ -22,7 +22,7 @@ class CodeWatchman(logging.Logger):
         self.config = config
 
         # Create console handler with colored formatting
-        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler = logging.StreamHandler()
         console_handler.setFormatter(ColoredFormatter())
         self.addHandler(console_handler)
 
