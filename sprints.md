@@ -1,6 +1,6 @@
 # Sprint Planning
 
-## Sprint 1: Core Foundation (1 week)
+## Sprint 1: Core Foundation
 **Goal**: Basic logging functionality with console output
 
 **Tasks**:
@@ -13,7 +13,7 @@
 
 **Deliverable**: Working logger with console output and custom levels
 
-## Sprint 2: Queue System (1 week)
+## Sprint 2: Queue System
 **Goal**: Implement async message queue system
 
 **Tasks**:
@@ -27,7 +27,7 @@
 
 **Deliverable**: Working async queue system integrated with logger
 
-## Sprint 3: WebSocket Handler (1 week)
+## Sprint 3: WebSocket Handler
 **Goal**: Add server communication capability
 
 **Tasks**:
@@ -41,7 +41,7 @@
 
 **Deliverable**: Working WebSocket communication with server
 
-## Sprint 4: System Integration (1 week)
+## Sprint 4: System Integration
 **Goal**: Integrate all components and add system information
 
 **Tasks**:
@@ -55,7 +55,7 @@
 
 **Deliverable**: Fully integrated system with all core features
 
-## Sprint 5: Documentation & Polish (1 week)
+## Sprint 5: Documentation & Polish
 **Goal**: Prepare for v1.0 release
 
 **Tasks**:
