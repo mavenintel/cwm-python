@@ -53,6 +53,7 @@ codewatchman/
 │   └── worker.py          # Queue worker/processor
 └── utils/
     ├── __init__.py
+    ├── base_formatter.py  # Base class for utils
     ├── formatters.py      # Log formatting utilities
     └── system_info.py     # System/environment info collector
 

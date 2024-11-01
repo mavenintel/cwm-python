@@ -1,8 +1,0 @@
-requests==2.*
-websockets==13.*
-websocket-client==1.*
-colorama==0.4.*
-tqdm==4.*
-black==24.*
-pytest==8.*
-mypy==1.*

@@ -16,8 +16,11 @@ dependencies = [
     "websockets==13.*",
     "websocket-client==1.*",
     "colorama==0.4.*",
-    "tqdm==4.*"
+    "tqdm==4.*",
+    "black==24.*",
+    "mypy==1.*"
 ]
+
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",

@@ -1,6 +1,18 @@
-from __future__ import annotations
 import logging
+from colorama import Fore, Style
 from enum import IntEnum
+
+SEPARATOR = "---separator---"
+
+COLORS = {
+    logging.DEBUG: Fore.CYAN,
+    logging.INFO: Fore.WHITE,
+    logging.WARNING: Fore.YELLOW,
+    logging.ERROR: Fore.RED,
+    logging.CRITICAL: Fore.RED + Style.BRIGHT,
+    25: Fore.GREEN,  # SUCCESS
+    45: Fore.RED,    # FAILURE
+}
 
 # Custom log levels
 class LogLevel(IntEnum):
@@ -12,18 +24,3 @@ class LogLevel(IntEnum):
     CRITICAL = logging.CRITICAL # 50
     SUCCESS = logging.INFO + 5  # 25
     FAILURE = logging.ERROR + 5 # 45
-
-# Add custom level names to logging
-logging.addLevelName(LogLevel.SUCCESS, "SUCCESS")
-logging.addLevelName(LogLevel.FAILURE, "FAILURE")
-
-# ANSI Color codes
-class Colors:
-    DEBUG = "\033[36m"     # Cyan
-    INFO = "\033[37m"      # White
-    WARNING = "\033[33m"   # Yellow
-    ERROR = "\033[31m"     # Red
-    CRITICAL = "\033[35m"  # Magenta
-    SUCCESS = "\033[32m"   # Green
-    FAILURE = "\033[91m"   # Bright Red
-    RESET = "\033[0m"      # Reset
