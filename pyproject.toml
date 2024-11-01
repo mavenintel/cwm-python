@@ -34,3 +34,9 @@ classifiers = [
 
 [tool.setuptools]
 packages = ["codewatchman"]
+
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.pytest_env]
+UNIT_TESTS = "true"

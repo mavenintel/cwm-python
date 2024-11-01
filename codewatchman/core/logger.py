@@ -17,6 +17,9 @@ class CodeWatchman(logging.Logger):
 
         self.config = config
 
+        # Enable propagation to root logger
+        self.propagate = True
+
         # Create console handler with colored formatting
         if config.console_logging:
             self.addHandler(ConsoleHandler(config))
@@ -49,10 +52,9 @@ class CodeWatchman(logging.Logger):
         """Context manager entry."""
         return self
 
-    def __exit__(self) -> None:
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
         """Context manager exit with cleanup."""
         self.handlers.clear()
 
     def close(self) -> None:
-        """Close the logger and release resources."""
         self.handlers.clear()

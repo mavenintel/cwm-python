@@ -14,7 +14,7 @@ class CodeWatchmanConfig:
     console_logging: bool = True
     enable_level_color: bool = True
     enable_message_color: bool = True
-    level: LogLevel = LogLevel.INFO
+    level: LogLevel = LogLevel.DEBUG
     separator_length: int = 80
 
     format_string: str = "%(asctime)s | %(levelname)s | %(message)s"
