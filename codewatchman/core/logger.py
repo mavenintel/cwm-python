@@ -17,7 +17,9 @@ class CodeWatchman(logging.Logger):
 
         self.config = config
 
-        self.addHandler(ConsoleHandler(config))
+        # Create console handler with colored formatting
+        if config.console_logging:
+            self.addHandler(ConsoleHandler(config))
 
     def success(self, msg: str, *args, **kwargs) -> None:
         """Log a success message.
