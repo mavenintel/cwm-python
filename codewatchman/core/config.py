@@ -20,6 +20,13 @@ class CodeWatchmanConfig:
     format_string: str = "%(asctime)s | %(levelname)s | %(message)s"
     date_format: str = "%Y/%m/%d %H:%M:%S"
 
+    # Queue options
+    max_size: int = 1000
+    batch_size: int = 100
+    batch_interval: float = 1.0  # seconds
+    max_retries: int = 3
+    retry_delay: float = 1.0  # seconds
+
     def __post_init__(self) -> None:
         """Validate configuration values."""
         self.validate_project_credentials()

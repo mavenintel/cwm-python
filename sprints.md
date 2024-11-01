@@ -25,7 +25,7 @@
 6. Write queue system tests
 7. Add queue statistics
 
-**Deliverable**: Working async queue system integrated with logger
+**Deliverable**: Working async queue system
 
 ## Sprint 3: WebSocket Handler
 **Goal**: Add server communication capability
@@ -39,7 +39,7 @@
 6. Implement heartbeat mechanism
 7. Write WebSocket handler tests
 
-**Deliverable**: Working WebSocket communication with server
+**Deliverable**: Working async queue system integrated with WebSocketHandler
 
 ## Sprint 4: System Integration
 **Goal**: Integrate all components and add system information
