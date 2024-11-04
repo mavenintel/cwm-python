@@ -46,7 +46,7 @@ codewatchman/
 │   ├── __init__.py
 │   ├── base_handler.py    # Abstract base handler
 │   ├── console.py         # Console output handler
-│   └── websocket.py       # WebSocket handler for server communication
+│   └── websocket.py       # WebSocket handler for server
 ├── queue/
 │   ├── __init__.py
 │   ├── message_queue.py   # Async queue implementation
@@ -71,6 +71,8 @@ tests/
    - `dataclasses`: For configuration objects
    - `typing`: For type hints
    - `logging`: Python's built-in logging module
+   - `colorama`: For colored console output
+   - `tqdm`: For progress tracking
 
 2. **Optional Dependencies**
    - `psutil`: For detailed system information
@@ -82,7 +84,7 @@ tests/
 
 ### 1. Core Components
 
-#### CodeWatchmanConfig
+#### CodeWatchman Config
 ```python
 @dataclass
 class CodeWatchmanConfig:
@@ -118,11 +120,6 @@ class CodeWatchmanConfig:
 - Implements backoff strategy
 
 ### 3. Handlers
-
-#### BaseHandler
-- Abstract base class
-- Defines interface for all handlers
-- Implements common functionality
 
 #### ConsoleHandler
 - Extends `logging.StreamHandler`
