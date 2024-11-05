@@ -2,7 +2,6 @@ from .constants import LogLevel
 from dataclasses import dataclass
 from urllib.parse import urlparse
 
-
 @dataclass
 class CodeWatchmanConfig:
     """Configuration class for CodeWatchman logger."""
@@ -26,6 +25,16 @@ class CodeWatchmanConfig:
     batch_interval: float = 1.0  # seconds
     max_retries: int = 3
     retry_delay: float = 1.0  # seconds
+
+    # WebSocket options
+    initial_retry_delay: float = 1.0  # seconds
+    max_retry_delay: int = 60
+    max_retry_attempts: int = 10
+    retry_multiplier: float = 2.0
+
+    # Add heartbeat configuration
+    heartbeat_interval: float = 30.0  # seconds
+    heartbeat_timeout: float = 10.0   # seconds
 
     def __post_init__(self) -> None:
         """Validate configuration values."""

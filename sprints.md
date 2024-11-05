@@ -45,13 +45,13 @@
 **Goal**: Integrate all components and add system information
 
 **Tasks**:
-1. Implement system information collection
-2. Add environment data gathering
-3. Integrate all handlers and queue system
-4. Implement graceful shutdown
-5. Add connection state monitoring
-6. Create integration tests
-7. Add comprehensive error handling
+1. Integrate all handlers and queue system
+2. Implement graceful shutdown
+3. Add connection state monitoring
+4. Implement system information collection
+5. Add environment data gathering
+6. Add comprehensive error handling
+1. Create integration tests
 
 **Deliverable**: Fully integrated system with all core features
 
