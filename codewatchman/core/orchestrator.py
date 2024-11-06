@@ -11,6 +11,7 @@ from .constants import ConnectionState, LogLevel
 from ..queue import MessageQueue, QueueWorker, QueueMessage
 from ..handlers.websocket import WebSocketHandler
 from ..utils.metrics import ConnectionMetrics, QueueMetrics, MetricsAggregator
+from ..utils.json_encoder import MetricsJSONEncoder
 
 class WatchmanOrchestrator:
     def __init__(self, config: CodeWatchmanConfig):
@@ -186,7 +187,7 @@ class WatchmanOrchestrator:
                 latest_metrics = self.metrics_aggregator.get_latest_metrics()
 
                 # Convert metrics to JSON string
-                metrics_json = json.dumps(latest_metrics)
+                metrics_json = json.dumps(latest_metrics, cls=MetricsJSONEncoder)
 
                 # Send metrics to WebSocket server
                 if self.websocket.is_connected():

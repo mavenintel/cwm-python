@@ -1,12 +1,14 @@
 from __future__ import annotations
 import asyncio
 import logging
-from datetime import datetime
-from typing import List, Optional
 from threading import Lock
+from typing import List, Optional
+from datetime import datetime
+from collections import deque
+from weakref import WeakSet
 
-from ..core.constants import LogLevel
 from ..core.config import CodeWatchmanConfig
+from ..core.constants import LogLevel
 from .message import QueueMessage
 
 class MessageQueue:
@@ -17,15 +19,22 @@ class MessageQueue:
         self._lock = Lock()
         self._paused = False
 
-        # Statistics
+        # Use deque for batch processing (more efficient than list)
+        self._current_batch: deque = deque(maxlen=config.batch_size)
+        self._batch_lock = Lock()
+
+        # Use WeakSet for callbacks to prevent memory leaks
+        self._callbacks = WeakSet()
+
+        # Statistics with atomic counters
         self._total_messages = 0
         self._processed_messages = 0
         self._failed_messages = 0
         self._retried_messages = 0
 
-        # Batch processing
-        self._current_batch: List[QueueMessage] = []
-        self._batch_lock = Lock()
+        # Performance optimizations
+        self._batch_ready = asyncio.Event()
+        self._flush_threshold = min(config.batch_size // 2, 50)  # Dynamic flush threshold
 
     @property
     def size(self) -> int:
@@ -49,81 +58,68 @@ class MessageQueue:
                 "current_queue_size": self.size
             }
 
-    async def put(self, level: int, message: str, payload: Optional[dict] = None) -> bool:
-        """Add message to queue.
-
-        Args:
-            level: Log level
-            message: Log message
-            payload: Optional extra data
-
-        Returns:
-            bool: True if message was queued successfully
-
-        Raises:
-            ValueError: If level is invalid or message is not a string
-            TypeError: If message is not a string
-        """
-        if not isinstance(level, (int, LogLevel)) or level not in [
-            LogLevel.DEBUG,
-            LogLevel.INFO,
-            LogLevel.WARNING,
-            LogLevel.ERROR,
-            LogLevel.CRITICAL,
-            LogLevel.SUCCESS,
-            LogLevel.FAILURE
-        ]:
-            raise ValueError("Invalid logging level")
-
-        if not isinstance(message, str):
-            raise TypeError("Message must be a string")
-
-        if self.is_full:
-            logging.warning("Queue is full - message dropped")
+    async def put(self, level: LogLevel, message: str, timestamp: Optional[datetime] = None, payload: Optional[dict] = None) -> bool:
+        """Put a message in the queue with optimized batching."""
+        if self._paused or self.is_full:
             return False
 
-        queue_message = QueueMessage(
-            level=level,
-            message=message,
-            timestamp=datetime.utcnow(),
-            payload=payload
-        )
+        try:
+            msg = QueueMessage(
+                level=level,
+                message=message,
+                timestamp=timestamp or datetime.now(),
+                payload=payload
+            )
 
+            # Fast path for non-full queue
+            if self.size < self.config.max_size - self._flush_threshold:
+                await self._queue.put(msg)
+                self._increment_total()
+                return True
+
+            # Slow path with lock for near-full queue
+            async with asyncio.Lock():
+                if self.is_full:
+                    return False
+                await self._queue.put(msg)
+                self._increment_total()
+                return True
+
+        except Exception as e:
+            logging.error(f"Error putting message in queue: {e}")
+            return False
+
+    def _increment_total(self) -> None:
+        """Thread-safe counter increment."""
         with self._lock:
             self._total_messages += 1
-
-        try:
-            await self._queue.put(queue_message)
-            return True
-        except Exception as e:
-            logging.error(f"Failed to queue message: {str(e)}")
-            return False
-
-    async def get(self) -> Optional[QueueMessage]:
-        """Get next message from queue.
-
-        Returns:
-            QueueMessage or None if queue is empty
-        """
-        try:
-            return await self._queue.get()
-        except asyncio.QueueEmpty:
-            return None
+            if self.size >= self._flush_threshold:
+                self._batch_ready.set()
 
     async def get_batch(self) -> List[QueueMessage]:
-        """Get batch of messages up to batch_size.
+        """Get a batch of messages with optimized retrieval."""
+        if self._paused:
+            return []
 
-        Returns:
-            List of QueueMessage objects
-        """
-        messages = []
+        batch = []
+        try:
+            # Wait for batch threshold or timeout
+            await asyncio.wait_for(self._batch_ready.wait(), timeout=self.config.batch_interval)
+        except asyncio.TimeoutError:
+            pass
 
-        with self._batch_lock:
-            while len(messages) < self.config.batch_size and not self._queue.empty():
-                if msg := await self.get():
-                    messages.append(msg)
+        # Collect messages up to batch size
+        while len(batch) < self.config.batch_size and not self._queue.empty():
+            try:
+                msg = self._queue.get_nowait()
+                batch.append(msg)
+            except asyncio.QueueEmpty:
+                break
 
-        return messages
+        if not batch:
+            self._batch_ready.clear()
+
+        return batch
 
     def mark_processed(self, count: int = 1) -> None:
         """Mark messages as successfully processed.

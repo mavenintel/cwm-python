@@ -2,6 +2,7 @@ import pytest
 from datetime import datetime, timedelta
 from codewatchman.core.config import CodeWatchmanConfig
 from codewatchman.utils.metrics import MetricsAggregator
+import json
 
 @pytest.fixture
 def config():
@@ -45,3 +46,17 @@ def test_gpu_collection_interval(config):
     # After interval, collection should be allowed
     aggregator.last_gpu_collection = datetime.now() - timedelta(seconds=config.gpu_collect_interval + 0.1)
     assert aggregator.should_collect_gpu(config.gpu_collect_interval)
+
+def test_metrics_json_serialization(config):
+    aggregator = MetricsAggregator()
+    aggregator.add_system_metrics(config)
+
+    # Test JSON serialization
+    json_str = aggregator.to_json()
+    assert isinstance(json_str, str)
+
+    # Verify we can parse it back
+    parsed = json.loads(json_str)
+    assert "timestamp" in parsed
+    assert "system" in parsed
+    assert isinstance(parsed["timestamp"], str)  # Should be ISO format string

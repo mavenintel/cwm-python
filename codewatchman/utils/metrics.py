@@ -12,6 +12,7 @@ import logging
 
 from ..core.config import CodeWatchmanConfig
 from ..core.constants import ConnectionState, LogLevel
+from .json_encoder import MetricsJSONEncoder
 
 @dataclass
 class GPUMetrics:
@@ -328,7 +329,8 @@ class MetricsAggregator:
         latest = {
             "connection": self.connection_metrics.get_summary(),
             "queue": self.queue_metrics.get_summary(),
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now(),
+            "collection_interval": self.collection_interval
         }
 
         if self.system_metrics:
@@ -337,3 +339,7 @@ class MetricsAggregator:
             latest["system"] = system_dict
 
         return latest
+
+    def to_json(self) -> str:
+        """Convert metrics to JSON string."""
+        return json.dumps(self.get_latest_metrics(), cls=MetricsJSONEncoder)
