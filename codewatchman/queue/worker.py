@@ -32,7 +32,7 @@ class QueueWorker:
         self._thread = threading.Thread(target=self._run_worker, daemon=True)
         self._thread.start()
 
-    def stop(self) -> None:
+    async def stop(self) -> None:
         """Stop the worker thread."""
         if not self._running:
             return
@@ -40,11 +40,16 @@ class QueueWorker:
         self._running = False
 
         # Wait for shutdown to complete - 30 seconds timeout
-        if not self._shutdown_complete.wait(timeout=30.0):
+        shutdown_complete = await asyncio.wait_for(
+            asyncio.to_thread(self._shutdown_complete.wait),
+            timeout=30.0
+        )
+
+        if not shutdown_complete:
             logging.error("Queue worker shutdown timed out")
 
         if self._thread and self._thread.is_alive():
-            self._thread.join(timeout=self.config.batch_interval)
+            await asyncio.to_thread(self._thread.join, timeout=self.config.batch_interval)
 
     def _run_worker(self) -> None:
         """Main worker loop."""

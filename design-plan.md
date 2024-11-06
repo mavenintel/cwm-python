@@ -105,7 +105,7 @@ class CodeWatchmanConfig:
 - Handles graceful shutdown
 - Implements context manager protocol
 
-#### WatchmanManager
+#### WatchmanOrchestrator
 - Manages the lifecycle of the logger
 - Initializes the logger with the provided configuration
 - Stops the logger gracefully when the program exits

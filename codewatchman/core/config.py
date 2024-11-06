@@ -33,14 +33,19 @@ class CodeWatchmanConfig:
     retry_multiplier: float = 2.0
 
     # WebSocket keepalive options
-    ping_interval: float = 30.0  # seconds
+    ping_interval: float = 10.0  # seconds
     ping_timeout: float = 10.0   # seconds
+
+    # System metrics options
+    enable_gpu: bool = False    # Whether to collect GPU metrics
+    gpu_collect_interval: float = 5.0  # How often to collect GPU metrics (seconds)
 
     def __post_init__(self) -> None:
         """Validate configuration values."""
         self.validate_project_credentials()
         self.validate_server_url()
         self.validate_level()
+        self.validate_metrics_config()
 
     def validate_project_credentials(self) -> None:
         """Validate project credentials."""
@@ -73,3 +78,14 @@ class CodeWatchmanConfig:
             LogLevel.FAILURE
         ]:
             raise ValueError("Invalid logging level")
+
+    def validate_metrics_config(self) -> None:
+        """Validate metrics configuration."""
+        if not isinstance(self.enable_gpu, bool):
+            raise ValueError("enable_gpu must be a boolean")
+
+        if not isinstance(self.gpu_collect_interval, (int, float)):
+            raise ValueError("gpu_collect_interval must be a number")
+
+        if self.gpu_collect_interval < 0:
+            raise ValueError("gpu_collect_interval must be positive")

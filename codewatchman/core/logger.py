@@ -7,15 +7,15 @@ from typing import Optional
 from .constants import LogLevel, SEPARATOR
 from ..handlers import ConsoleHandler
 from .config import CodeWatchmanConfig
-from .manager import WatchmanManager
+from .orchestrator import WatchmanOrchestrator
 
 class CodeWatchman(logging.Logger):
     def __init__(self, config: CodeWatchmanConfig, name: str = "CodeWatchman"):
         super().__init__(name, config.level)
 
         # Disable noisy log messages
-        logging.getLogger("asyncio").setLevel(logging.WARNING)
-        logging.getLogger("websockets").setLevel(logging.WARNING)
+        # logging.getLogger("asyncio").setLevel(logging.WARNING)
+        # logging.getLogger("websockets").setLevel(logging.WARNING)
 
         # Register custom log levels
         logging.addLevelName(LogLevel.SUCCESS, "SUCCESS")
@@ -30,7 +30,7 @@ class CodeWatchman(logging.Logger):
         if config.console_logging:
             self.addHandler(ConsoleHandler(config))
 
-        self.orchestrator = WatchmanManager(config)
+        self.orchestrator = WatchmanOrchestrator(config)
 
         try:
             self.loop = asyncio.get_event_loop()

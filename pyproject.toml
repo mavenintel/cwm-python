@@ -16,7 +16,9 @@ dependencies = [
     "colorama==0.4.*",
     "tqdm==4.*",
     "black==24.*",
-    "mypy==1.*"
+    "mypy==1.*",
+    "psutil==6.1.*",
+    "nvidia-ml-py==12.560.30"
 ]
 
 classifiers = [
