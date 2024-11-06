@@ -32,9 +32,9 @@ class CodeWatchmanConfig:
     max_retry_attempts: int = 10
     retry_multiplier: float = 2.0
 
-    # Add heartbeat configuration
-    heartbeat_interval: float = 30.0  # seconds
-    heartbeat_timeout: float = 10.0   # seconds
+    # WebSocket keepalive options
+    ping_interval: float = 30.0  # seconds
+    ping_timeout: float = 10.0   # seconds
 
     def __post_init__(self) -> None:
         """Validate configuration values."""

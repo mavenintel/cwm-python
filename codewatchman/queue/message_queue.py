@@ -15,6 +15,7 @@ class MessageQueue:
         self.config = config
         self._queue: asyncio.Queue = asyncio.Queue(maxsize=config.max_size)
         self._lock = Lock()
+        self._paused = False
 
         # Statistics
         self._total_messages = 0
@@ -156,3 +157,32 @@ class MessageQueue:
         # Process remaining items
         while not self._queue.empty():
             await asyncio.sleep(0.1)
+
+    def pause(self) -> None:
+        """Pause queue processing."""
+        with self._lock:
+            self._paused = True
+            logging.debug("Queue processing paused")
+
+    def resume(self) -> None:
+        """Resume queue processing."""
+        with self._lock:
+            self._paused = False
+            logging.debug("Queue processing resumed")
+
+    def is_paused(self) -> bool:
+        """Check if queue processing is paused."""
+        return self._paused
+
+    def clear(self) -> None:
+        """Clear all messages from the queue."""
+        try:
+            while not self._queue.empty():
+                self._queue.get_nowait()
+            logging.debug("Queue cleared")
+        except Exception as e:
+            logging.error(f"Error clearing queue: {e}")
+
+    def empty(self) -> bool:
+        """Check if queue is empty."""
+        return self._queue.empty()

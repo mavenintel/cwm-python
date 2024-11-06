@@ -41,6 +41,7 @@ codewatchman/
 │   ├── __init__.py
 │   ├── logger.py          # Main CodeWatchman class
 │   ├── config.py          # Configuration class
+│   ├── manager.py         # Manager class
 │   └── constants.py       # Constants and enums
 ├── handlers/
 │   ├── __init__.py
@@ -103,6 +104,11 @@ class CodeWatchmanConfig:
 - Provides additional logging methods (success, failure, sep)
 - Handles graceful shutdown
 - Implements context manager protocol
+
+#### WatchmanManager
+- Manages the lifecycle of the logger
+- Initializes the logger with the provided configuration
+- Stops the logger gracefully when the program exits
 
 ### 2. Queue System
 

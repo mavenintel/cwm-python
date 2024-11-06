@@ -17,61 +17,10 @@ class WebSocketHandler(BaseHandler):
         self.last_attempt = None
         self.attempt_count = 0
         self._state_callbacks = []
+        self._listen_task = None
+        self._closing = False
 
-        # Add heartbeat related attributes
-        self._heartbeat_task: Optional[asyncio.Task] = None
-        self._last_heartbeat: Optional[datetime] = None
-        self._heartbeat_received = asyncio.Event()
-
-    async def _start_heartbeat(self) -> None:
-        """Start the heartbeat mechanism."""
-        self._heartbeat_task = asyncio.create_task(self._heartbeat_loop())
-
-    async def _stop_heartbeat(self) -> None:
-        """Stop the heartbeat mechanism."""
-        if self._heartbeat_task:
-            self._heartbeat_task.cancel()
-            try:
-                await self._heartbeat_task
-            except asyncio.CancelledError:
-                pass
-            self._heartbeat_task = None
-
-    async def _heartbeat_loop(self) -> None:
-        """Main heartbeat loop that sends pings and monitors responses."""
-        while self.state == ConnectionState.CONNECTED:
-            try:
-                # Send heartbeat
-                await self.connection.ping()
-                self._heartbeat_received.clear()
-
-                # Wait for pong response
-                try:
-                    await asyncio.wait_for(
-                        self._heartbeat_received.wait(),
-                        timeout=self.config.heartbeat_timeout
-                    )
-                    self._last_heartbeat = datetime.now()
-                except asyncio.TimeoutError:
-                    logging.error("Heartbeat timeout - no response received")
-                    await self._handle_heartbeat_timeout()
-                    break
-
-                # Wait for next interval
-                await asyncio.sleep(self.config.heartbeat_interval)
-
-            except Exception as e:
-                logging.error(f"Heartbeat error: {str(e)}")
-                await self._handle_heartbeat_timeout()
-                break
-
-    async def _handle_heartbeat_timeout(self) -> None:
-        """Handle heartbeat timeout by initiating reconnection."""
-        logging.warning("Heartbeat timeout - initiating reconnection")
-        await self.disconnect()
-        await self.connect()
-
-    def add_state_callback(self, callback: Callable[[ConnectionState], None]) -> None:
+    def register_state_callback(self, callback: Callable[[ConnectionState], None]) -> None:
         """Add a callback for state changes."""
         self._state_callbacks.append(callback)
 
@@ -99,13 +48,13 @@ class WebSocketHandler(BaseHandler):
                         extra_headers={
                             "x-project-id": self.config.project_id,
                             "x-project-secret": self.config.project_secret,
-                        }
+                        },
+                        ping_interval=self.config.ping_interval,
+                        ping_timeout=self.config.ping_timeout,
                     )
-                    self.connection.set_pong_handler(self._handle_pong)
                     self._set_state(ConnectionState.CONNECTED)
                     self.attempt_count = 0
                     logging.info("WebSocket connection established")
-                    await self._start_heartbeat()
                     self._listen_task = asyncio.create_task(self._listen_messages())
                     return True
 
@@ -152,22 +101,32 @@ class WebSocketHandler(BaseHandler):
 
     async def disconnect(self):
         """Close the WebSocket connection."""
-        if self.state == ConnectionState.CONNECTED:
+        if self.state == ConnectionState.CONNECTED and not self._closing:
+            self._closing = True
             try:
-                await self._stop_heartbeat()
-                self._listen_task.cancel()
-                await self._listen_task
-                await self.connection.close()
+                if self._listen_task:
+                    self._listen_task.cancel()
+                    try:
+                        await self._listen_task
+                    except asyncio.CancelledError:
+                        pass
+
+                if self.connection:
+                    await self.connection.close()
+                    self.connection = None
+
                 logging.info("WebSocket connection closed.")
             except Exception as e:
                 logging.error(f"Failed to close WebSocket connection: {e}")
             finally:
+                self._closing = False
                 self._set_state(ConnectionState.DISCONNECTED)
 
     async def send_message(self, message: str):
         """Send a message over the WebSocket."""
         if self.connection:
             try:
+                print(f"Sending message: {message}")
                 await self.connection.send(message)
                 logging.info(f"Message sent: {message}")
             except Exception as e:
@@ -176,17 +135,27 @@ class WebSocketHandler(BaseHandler):
 
     async def _listen_messages(self) -> None:
         """Continuously listen for incoming messages."""
-        while self.state == ConnectionState.CONNECTED:
-            try:
-                message = await self.connection.recv()
-                logging.info(f"Message received: {message}")
-                # Here you can add logic to handle different types of messages
-            except asyncio.CancelledError:
-                break
-            except Exception as e:
-                logging.error(f"Failed to receive message: {e}")
-                await self._handle_heartbeat_timeout()
-                break
+        try:
+            while self.state == ConnectionState.CONNECTED and not self._closing:
+                try:
+                    message = await self.connection.recv()
+                    logging.info(f"Message received: {message}")
+                except websockets.ConnectionClosed:
+                    if not self._closing:
+                        logging.warning("WebSocket connection closed - initiating reconnection")
+                        self._set_state(ConnectionState.RECONNECTING)
+                        await self.connect()
+                    break
+                except asyncio.CancelledError:
+                    break
+                except Exception as e:
+                    if not self._closing:
+                        logging.error(f"Error receiving message: {str(e)}")
+                        self._set_state(ConnectionState.RECONNECTING)
+                        await self.connect()
+                    break
+        except asyncio.CancelledError:
+            pass
 
     async def receive_message(self) -> Optional[str]:
         """

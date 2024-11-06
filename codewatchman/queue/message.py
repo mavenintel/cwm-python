@@ -1,3 +1,4 @@
+import json
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
@@ -12,3 +13,6 @@ class QueueMessage:
     payload: Optional[dict] = None
     retry_count: int = 0
     batch_id: Optional[str] = None
+
+    def __str__(self) -> str:
+        return json.dumps(self.__dict__)
