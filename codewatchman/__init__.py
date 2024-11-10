@@ -1,14 +1,9 @@
-from .logger import CodeWatchman
-from .config import CodeWatchmanConfig
-from .exceptions import CodeWatchmanError, CodeWatchmanConfigurationError, CodeWatchmanConnectionError, CodeWatchmanAPIError
+from .codewatchman import CodeWatchman
+from .core.config import CodeWatchmanConfig
+from .core.constants import LogLevel
 
 __all__ = [
-    'CodeWatchman',
-    'CodeWatchmanConfig',
-    'CodeWatchmanError',
-    'CodeWatchmanConfigurationError',
-    'CodeWatchmanConnectionError',
-    'CodeWatchmanAPIError'
+    "CodeWatchman",
+    "CodeWatchmanConfig",
+    "LogLevel",
 ]
-
-__version__ = '0.1.0'

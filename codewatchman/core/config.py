@@ -1,0 +1,20 @@
+from .constants import LogLevel
+from dataclasses import dataclass
+from urllib.parse import urlparse
+
+@dataclass
+class CodeWatchmanConfig:
+    """Configuration class for CodeWatchman logger."""
+    # Code Watchman Remote Server Options
+    project_id: str | None = None
+    project_secret: str | None = None
+    server_url: str = "ws://localhost:8787/log"
+
+    # Console logging options
+    console_logging: bool = True
+    enable_level_color: bool = True
+    enable_message_color: bool = True
+    level: LogLevel = LogLevel.DEBUG
+    separator_length: int = 80
+    format_string: str = "%(asctime)s | %(levelname)s | %(message)s"
+    date_format: str = "%Y/%m/%d %H:%M:%S"
