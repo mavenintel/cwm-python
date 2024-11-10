@@ -2,13 +2,6 @@ import logging
 from colorama import Fore, Style
 from enum import IntEnum, Enum
 
-class ConnectionState(Enum):
-    DISCONNECTED = "disconnected"
-    CONNECTING = "connecting"
-    CONNECTED = "connected"
-    RECONNECTING = "reconnecting"
-    FAILED = "failed"
-
 SEPARATOR = "---separator---"
 
 COLORS = {

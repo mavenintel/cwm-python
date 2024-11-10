@@ -1,3 +1,6 @@
+# CodeWatchman Design Plan
+
+## Overview
 I want to build a Python library called CodeWatchman, which is a custom logging module. The module should be a wrapper around Python's default logging library—the library logs to the console as well as to a server. The server calls should happen without blocking the script execution. This is how the library usage will be.
 
 ```python

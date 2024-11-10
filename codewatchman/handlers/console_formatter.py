@@ -1,5 +1,5 @@
 import logging
-from colorama import Fore, Style
+from colorama import Style
 
 from ..core.constants import COLORS, SEPARATOR
 from ..core.config import CodeWatchmanConfig

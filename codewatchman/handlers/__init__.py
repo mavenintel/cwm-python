@@ -1,3 +1,6 @@
 from .console import ConsoleHandler
-
-__all__ = ["ConsoleHandler"]
+from .console_formatter import ConsoleFormatter
+__all__ = [
+    "ConsoleHandler",
+    "ConsoleFormatter",
+]

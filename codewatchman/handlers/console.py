@@ -1,6 +1,6 @@
 import logging
 
-from ..utils import ConsoleFormatter
+from .console_formatter import ConsoleFormatter
 from ..core.config import CodeWatchmanConfig
 
 class ConsoleHandler(logging.StreamHandler):
