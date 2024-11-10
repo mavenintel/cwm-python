@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
-from .console_handler import ConsoleHandler
-from .config import CodeWatchmanConfig, default_config
+from .handlers import ConsoleHandler
+from .core.config import CodeWatchmanConfig
 
 class CodeWatchman(logging.Logger):
     CRITICAL = 50
@@ -13,16 +13,18 @@ class CodeWatchman(logging.Logger):
     DEBUG = 10
     NOTSET = 0
 
-    def __init__(self, config: Optional[CodeWatchmanConfig] = default_config):
+    def __init__(self, config: Optional[CodeWatchmanConfig] = None):
         super().__init__(config.name, config.level)
 
         self.setLevel(config.level)
+
+        if config is None:
+            config = CodeWatchmanConfig()
+
         self.config = config
 
         console_handler = ConsoleHandler(config)
         console_handler.setLevel(config.level)
-        formatter = logging.Formatter(config.local_log_format, config.local_log_date_format)
-        console_handler.setFormatter(formatter)
         self.addHandler(console_handler)
 
     def sep(self):
