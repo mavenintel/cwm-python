@@ -21,6 +21,6 @@ class CodeWatchmanConfig:
     date_format: str = "%Y/%m/%d %H:%M:%S"
 
     # Queue options
-    max_size: int = 1000
-    batch_size: int = 100
-    process_interval: float = 1.0  # seconds
+    max_size: int = 1000  # Maximum number of messages in the queue. Pass 0 for unlimited.
+    batch_size: int = 100  # Maximum number of messages in a batch.
+    process_interval: float = 1.0 # Time interval in seconds to process the queue.

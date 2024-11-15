@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Optional
+from datetime import datetime
 
 from .handlers import ConsoleHandler
 from .core.config import CodeWatchmanConfig
 from .core.constants import LogLevel, SEPARATOR
+from .queue import MessageQueue, CWMLog
 
 class CodeWatchman(logging.Logger):
     """
@@ -34,6 +37,7 @@ class CodeWatchman(logging.Logger):
         logging.addLevelName(LogLevel.SUCCESS, "SUCCESS")
         logging.addLevelName(LogLevel.FAILURE, "FAILURE")
 
+        self.queue = MessageQueue(config, self.logger)
 
     def success(self, msg: str, *args, **kwargs) -> None:
         """Log a success message."""
@@ -51,6 +55,13 @@ class CodeWatchman(logging.Logger):
         """Log a message with the given level."""
         super()._log(level, msg, *args, **kwargs)
 
+        self.queue.enqueue(
+            CWMLog(
+                level=level,
+                message=msg,
+                timestamp=datetime.now(),
+                payload=kwargs.get("extra", {})
+            ))
 
     def process_messages(self) -> None:
         """Process messages from the queue."""
