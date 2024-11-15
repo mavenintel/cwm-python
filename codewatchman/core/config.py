@@ -18,3 +18,8 @@ class CodeWatchmanConfig:
     separator_length: int = 80
     format_string: str = "%(asctime)s | %(levelname)s | %(message)s"
     date_format: str = "%Y/%m/%d %H:%M:%S"
+
+    # Queue options
+    max_size: int = 1000
+    batch_size: int = 100
+    batch_interval: float = 1.0  # seconds
