@@ -1,11 +1,8 @@
 from __future__ import annotations
 
 import logging
-import asyncio
 from typing import Optional
 
-from datetime import datetime
-from .queue import MessageQueue, QueueMessage
 from .handlers import ConsoleHandler
 from .core.config import CodeWatchmanConfig
 from .core.constants import LogLevel, SEPARATOR
@@ -37,7 +34,6 @@ class CodeWatchman(logging.Logger):
         logging.addLevelName(LogLevel.SUCCESS, "SUCCESS")
         logging.addLevelName(LogLevel.FAILURE, "FAILURE")
 
-        self.queue = MessageQueue(config, logger=self.logger)
 
     def success(self, msg: str, *args, **kwargs) -> None:
         """Log a success message."""
@@ -55,18 +51,14 @@ class CodeWatchman(logging.Logger):
         """Log a message with the given level."""
         super()._log(level, msg, *args, **kwargs)
 
-        self.queue.enqueue(
-            message=QueueMessage(
-                level=level,
-                message=msg,
-                timestamp=datetime.now(),
-                payload=kwargs.get("extra", None)
-            )
-        )
+
+    def process_messages(self) -> None:
+        """Process messages from the queue."""
+        self.queue.process_messages()
 
     def close(self) -> None:
         """Close the logger and release resources."""
-        self.logger.info(f"Closing logger: {self.queue.size} messages in queue")
+        self.logger.info(f"Closing logger.")
 
     def __enter__(self) -> CodeWatchman:
         """Context manager entry."""

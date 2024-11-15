@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 class CodeWatchmanConfig:
     """Configuration class for CodeWatchman logger."""
     # Code Watchman Remote Server Options
+    enable_remote_logging: bool = True
     project_id: str | None = None
     project_secret: str | None = None
     server_url: str = "ws://localhost:8787/log"
@@ -22,4 +23,4 @@ class CodeWatchmanConfig:
     # Queue options
     max_size: int = 1000
     batch_size: int = 100
-    batch_interval: float = 1.0  # seconds
+    process_interval: float = 1.0  # seconds
