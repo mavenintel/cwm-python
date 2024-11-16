@@ -3,7 +3,7 @@ import logging
 from typing import Optional
 from datetime import datetime
 
-from .handlers import ConsoleHandler, WebSocketHandler
+from .handlers import ConsoleHandler
 from .core.config import CodeWatchmanConfig
 from .core.constants import LogLevel, SEPARATOR
 from .queue import MessageQueue, CWMLog
@@ -21,21 +21,20 @@ class CodeWatchman(logging.Logger):
 
         self.config = config
         self.logger = logging.getLogger(name)
-        logging.basicConfig(level=config.level)
+        logging.basicConfig(level=config.internal_log_level)
 
         # Create console handler with colored formatting
         if config.console_logging:
             self.addHandler(ConsoleHandler(config))
 
         # Disable noisy log messages
-        # logging.getLogger("asyncio").setLevel(logging.WARNING)
-        # logging.getLogger("websockets").setLevel(logging.WARNING)
+        logging.getLogger("asyncio").setLevel(logging.WARNING)
+        logging.getLogger("websockets").setLevel(logging.WARNING)
 
         # Register custom log levels
         logging.addLevelName(LogLevel.SUCCESS, "SUCCESS")
         logging.addLevelName(LogLevel.FAILURE, "FAILURE")
 
-        self.websocket = WebSocketHandler(config, self.logger)
         self.queue = MessageQueue(config, self.logger)
 
     def success(self, msg: str, *args, **kwargs) -> None:

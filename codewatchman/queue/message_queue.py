@@ -25,6 +25,9 @@ class MessageQueue:
         self.thread = threading.Thread(target=self.start_loop, daemon=True)
         self.thread.start()
 
+        if not None in [config.server_url, config.project_id, config.project_secret]:
+            self.websocket.connect()
+
     def start_loop(self):
         asyncio.set_event_loop(self.loop)
         self.consume_task = self.loop.create_task(self.consume())
@@ -36,7 +39,8 @@ class MessageQueue:
         """
         try:
             # Assuming you have a method in WebSocketHandler to send a batch
-            await self.websocket.send(batch)
+            messages = [str(message) for message in batch]
+            await self.websocket.send(messages)
             self.logger.debug(f"Processed batch of {len(batch)} messages.")
         except Exception as e:
             self.logger.error(f"Error processing batch: {e}")
@@ -124,8 +128,13 @@ class MessageQueue:
     async def _shutdown(self):
         self.shutdown_event.set()
         if self.consume_task:
-            print("Waiting for consume task to finish")
+            self.logger.debug("Waiting for consume task to finish")
             await self.consume_task  # Wait for the consume coroutine to finish
+
+        if self.websocket:
+            self.logger.debug("Disconnecting from WebSocket server")
+            await self.websocket.disconnect()
+
         self.logger.debug("Shutdown complete.")
         return True
 
@@ -139,6 +148,21 @@ class MessageQueue:
                 future.result(timeout=self.config.shutdown_timeout)
             except Exception as e:
                 self.logger.error(f"Error during shutdown: {e}")
+
+            # Wait for all pending tasks to complete
+            async def wait_for_pending_tasks():
+                current_task = asyncio.current_task(loop=self.loop)
+                pending = [task for task in asyncio.all_tasks(loop=self.loop)
+                        if task is not current_task and not task.done()]
+                if pending:
+                    self.logger.debug("Waiting for pending tasks to complete.")
+                    await asyncio.gather(*pending, return_exceptions=True)
+
+            future = asyncio.run_coroutine_threadsafe(wait_for_pending_tasks(), self.loop)
+            try:
+                future.result(timeout=self.config.shutdown_timeout)
+            except Exception as e:
+                self.logger.error(f"Error waiting for pending tasks: {e}")
 
             # Stop the event loop safely from outside the loop
             self.loop.call_soon_threadsafe(self.loop.stop)

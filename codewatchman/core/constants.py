@@ -26,3 +26,10 @@ class LogLevel(IntEnum):
     CRITICAL = logging.CRITICAL      # 50
     SUCCESS = logging.INFO + 5       # 25
     FAILURE = logging.ERROR + 5  # 45
+
+class ConnectionState(Enum):
+    DISCONNECTED = "disconnected"
+    CONNECTING = "connecting"
+    CONNECTED = "connected"
+    RECONNECTING = "reconnecting"
+    FAILED = "failed"
