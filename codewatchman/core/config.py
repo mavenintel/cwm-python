@@ -1,6 +1,5 @@
 from .constants import LogLevel
 from dataclasses import dataclass
-from urllib.parse import urlparse
 
 @dataclass
 class CodeWatchmanConfig:
@@ -24,3 +23,5 @@ class CodeWatchmanConfig:
     max_size: int = 1000  # Maximum number of messages in the queue. Pass 0 for unlimited.
     batch_size: int = 100  # Maximum number of messages in a batch.
     process_interval: float = 1.0 # Time interval in seconds to process the queue.
+
+    shutdown_timeout: float = 5.0 # Timeout for shutting down the queue.

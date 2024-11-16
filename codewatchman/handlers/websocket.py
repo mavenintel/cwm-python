@@ -1,6 +1,7 @@
 import logging
 import asyncio
 import websockets
+from typing import List
 
 from typing import Optional
 from ..core.config import CodeWatchmanConfig
@@ -11,8 +12,6 @@ class WebSocketHandler:
         self.config = config
         self.logger = logger
 
-        self.connection: Optional[websockets.WebSocketClientProtocol] = None
-
     async def connect(self):
         """Connect to the WebSocket server."""
         pass
@@ -21,7 +20,15 @@ class WebSocketHandler:
         """Disconnect from the WebSocket server."""
         pass
 
-    async def send(self, message: str):
+    async def send(self, message):
         """Send a message to the WebSocket server."""
-        print(f"--------Sending messages: {message}")
+        self.logger.debug(f"--------Sending messages: {message}")
         pass
+
+    async def close(self):
+        """Close the WebSocket connection."""
+        try:
+            # Add any cleanup logic here
+            self.logger.debug("WebSocket connection closed.")
+        except Exception as e:
+            self.logger.error(f"Error closing WebSocket connection: {str(e)}")

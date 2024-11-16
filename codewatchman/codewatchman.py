@@ -1,11 +1,9 @@
 from __future__ import annotations
-
-import asyncio
 import logging
 from typing import Optional
 from datetime import datetime
 
-from .handlers import ConsoleHandler
+from .handlers import ConsoleHandler, WebSocketHandler
 from .core.config import CodeWatchmanConfig
 from .core.constants import LogLevel, SEPARATOR
 from .queue import MessageQueue, CWMLog
@@ -37,6 +35,7 @@ class CodeWatchman(logging.Logger):
         logging.addLevelName(LogLevel.SUCCESS, "SUCCESS")
         logging.addLevelName(LogLevel.FAILURE, "FAILURE")
 
+        self.websocket = WebSocketHandler(config, self.logger)
         self.queue = MessageQueue(config, self.logger)
 
     def success(self, msg: str, *args, **kwargs) -> None:
@@ -70,6 +69,7 @@ class CodeWatchman(logging.Logger):
     def close(self) -> None:
         """Close the logger and release resources."""
         self.logger.info(f"Closing logger.")
+        self.queue.shutdown()
 
     def __enter__(self) -> CodeWatchman:
         """Context manager entry."""

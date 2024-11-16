@@ -1,6 +1,7 @@
 from .console import ConsoleHandler
-from .console_formatter import ConsoleFormatter
+from .websocket import WebSocketHandler
+
 __all__ = [
     "ConsoleHandler",
-    "ConsoleFormatter",
+    "WebSocketHandler",
 ]
