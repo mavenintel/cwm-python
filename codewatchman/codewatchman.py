@@ -1,11 +1,12 @@
 from __future__ import annotations
-
 import logging
 from typing import Optional
+from datetime import datetime
 
 from .handlers import ConsoleHandler
 from .core.config import CodeWatchmanConfig
 from .core.constants import LogLevel, SEPARATOR
+from .queue import MessageQueue, CWMLog
 
 class CodeWatchman(logging.Logger):
     """
@@ -19,18 +20,22 @@ class CodeWatchman(logging.Logger):
             config = CodeWatchmanConfig()
 
         self.config = config
+        self.logger = logging.getLogger(name)
+        logging.basicConfig(level=config.internal_log_level)
 
         # Create console handler with colored formatting
         if config.console_logging:
             self.addHandler(ConsoleHandler(config))
 
         # Disable noisy log messages
-        # logging.getLogger("asyncio").setLevel(logging.WARNING)
-        # logging.getLogger("websockets").setLevel(logging.WARNING)
+        logging.getLogger("asyncio").setLevel(logging.WARNING)
+        logging.getLogger("websockets").setLevel(logging.WARNING)
 
         # Register custom log levels
         logging.addLevelName(LogLevel.SUCCESS, "SUCCESS")
         logging.addLevelName(LogLevel.FAILURE, "FAILURE")
+
+        self.queue = MessageQueue(config, self.logger)
 
     def success(self, msg: str, *args, **kwargs) -> None:
         """Log a success message."""
@@ -42,11 +47,28 @@ class CodeWatchman(logging.Logger):
 
     def sep(self, name: Optional[str] = None) -> None:
         """Add a separator line to the logs"""
-        self.info((SEPARATOR, name) if name else SEPARATOR)
+        self.log(LogLevel.SEPARATOR, (SEPARATOR, name) if name else SEPARATOR)
+
+    def _log(self, level: LogLevel, msg: str | tuple[str, str], *args, **kwargs) -> None:
+        """Log a message with the given level."""
+        super()._log(level, msg, *args, **kwargs)
+
+        self.queue.enqueue(
+            CWMLog(
+                level=level,
+                message=msg,
+                timestamp=datetime.now(),
+                payload=kwargs.get("extra", {})
+            ))
+
+    def process_messages(self) -> None:
+        """Process messages from the queue."""
+        self.queue.process_messages()
 
     def close(self) -> None:
         """Close the logger and release resources."""
-        pass
+        self.logger.info(f"Closing logger.")
+        self.queue.shutdown()
 
     def __enter__(self) -> CodeWatchman:
         """Context manager entry."""
